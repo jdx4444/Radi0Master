@@ -1,13 +1,22 @@
 #!/bin/bash
 # master_setup.sh
 #
-# This interactive master script sequentially runs:
+
+# ASCII Art Banner for radi0
+cat << 'EOF'
+                     
+                    |    o     
+,---.   ,---.   ,---|    .  ,---.
+|       ,---|   |   |    |  |   |
+`       `---^   `---'    `  `---'
+EOF
+
+# This master script sequentially runs:
 #   1. The Geekworm X729 UPS setup (from x729Script)
 #   2. The custom animated Plymouth splash installation (from PiSplazh)
 #   3. The radi0 C++ GUI application build process (from radi0)
 #   4. The radi0 autostart configuration (from radi0Boot)
 #
-# It prompts for key configuration values so that multiple users can run it without modifying the script.
 #
 # IMPORTANT:
 #   - Run this script as root (e.g., via sudo)
