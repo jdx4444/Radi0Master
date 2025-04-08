@@ -63,14 +63,14 @@ echo "-----------------------------------------"
 sleep 1
 
 ###############################################
-# Section 1: Geekworm X729 UPS Setup (Two Repos)
+# Section 1: Geekworm X729 UPS Setup (Two Repositories)
 ###############################################
 echo "========================================="
 echo "Section 1: Geekworm X729 UPS Setup"
 echo "========================================="
 sleep 1
 
-# Clone Geekworm's x729-script repository if not already present.
+# Clone Geekworm's x729-script repository.
 UPS_GEEKWORM_DIR="/opt/x729-script"
 if [ ! -d "${UPS_GEEKWORM_DIR}" ]; then
   echo "[x729] Cloning Geekworm x729-script repository into ${UPS_GEEKWORM_DIR}..."
@@ -79,7 +79,7 @@ else
   echo "[x729] Geekworm repository already exists in ${UPS_GEEKWORM_DIR}. Skipping clone."
 fi
 
-# Clone the custom x729Script repository from your GitHub if not present.
+# Clone the custom x729Script repository.
 UPS_CUSTOM_DIR="/opt/x729Script"
 if [ ! -d "${UPS_CUSTOM_DIR}" ]; then
   echo "[x729] Cloning custom x729Script repository into ${UPS_CUSTOM_DIR}..."
@@ -88,11 +88,9 @@ else
   echo "[x729] Custom x729Script repository already exists in ${UPS_CUSTOM_DIR}. Skipping clone."
 fi
 
-# ---------------------------
-# Install and Configure UPS Services
-# ---------------------------
+# Install UPS services (using files from the Geekworm repository).
 
-# Fan control service: copy and set permissions.
+# Fan control service.
 echo "[x729] Installing x729-fan service..."
 cp -f "${UPS_GEEKWORM_DIR}/x729-fan.sh" /usr/local/bin/
 chmod +x /usr/local/bin/x729-fan.sh
@@ -119,9 +117,8 @@ else
   echo "[x729] Alias 'x729off' already exists in ${TARGET_BASHRC}."
 fi
 
-# Deploy the AC loss shutdown script and corresponding systemd service.
+# Deploy the AC loss shutdown monitor.
 echo "[x729] Deploying AC loss shutdown monitor..."
-
 cat << 'EOF' > /usr/local/bin/ac_loss_shutdown.py
 #!/usr/bin/env python3
 """
@@ -170,10 +167,8 @@ def main():
 if __name__ == "__main__":
     main()
 EOF
-
 chmod +x /usr/local/bin/ac_loss_shutdown.py
 
-# Create systemd service for AC loss shutdown.
 cat << 'EOF' > /lib/systemd/system/ac-loss-shutdown.service
 [Unit]
 Description=AC Loss Shutdown Monitor for Geekworm X729 UPS
@@ -194,65 +189,76 @@ systemctl daemon-reload
 systemctl enable x729-fan.service && systemctl start x729-fan.service
 systemctl enable x729-pwr.service && systemctl start x729-pwr.service
 systemctl enable ac-loss-shutdown.service && systemctl start ac-loss-shutdown.service
-
 echo "[x729] X729 UPS setup completed successfully!"
 echo ""
 sleep 1
 
 ###########################################
-# Section 2: Plymouth Boot Splash (PiSplazh)
+# Section 2: Plymouth Boot Splash Setup (PiSplazh)
 ###########################################
 echo "========================================="
 echo "Section 2: Plymouth Animated Splash Setup"
 echo "========================================="
 sleep 1
 
-# Clone the PiSplazh repository if not already present.
+# Ensure the PiSplazh repository is properly cloned.
 PISPLAZH_DIR="/opt/PiSplazh"
-if [ ! -d "${PISPLAZH_DIR}" ]; then
+if [ ! -d "${PISPLAZH_DIR}" ] || [ ! -d "${PISPLAZH_DIR}/.git" ]; then
   echo "[Splash] Cloning PiSplazh repository into ${PISPLAZH_DIR}..."
+  rm -rf "${PISPLAZH_DIR}"
   git clone https://github.com/jdx4444/PiSplazh.git "${PISPLAZH_DIR}"
 else
-  echo "[Splash] PiSplazh repository already exists in ${PISPLAZH_DIR}. Skipping clone."
+  echo "[Splash] PiSplazh repository exists. Updating with latest changes..."
+  pushd "${PISPLAZH_DIR}" > /dev/null
+  git pull
+  popd > /dev/null
 fi
 
-# Prompt for the path to splash screen images.
-read -p "[Splash] Enter the absolute path to your splash screen images (images must be named frame1.png, frame2.png, etc.): " IMAGE_PATH
+# Allow the user to choose their splash images.
+echo "[Splash] You can use sample images provided with PiSplazh."
+read -p "[Splash] Enter the absolute path to your splash screen images (or leave blank to use sample images from ${PISPLAZH_DIR}/sample): " IMAGE_PATH
+if [ -z "$IMAGE_PATH" ]; then
+  IMAGE_PATH="${PISPLAZH_DIR}/sample"
+fi
 if [ ! -d "${IMAGE_PATH}" ]; then
   echo "[Splash] Error: Directory '${IMAGE_PATH}' does not exist."
   exit 1
 fi
 
-# Optionally ask for image count (auto-detect if left blank).
+# Optionally ask for image count.
 read -p "[Splash] Enter the number of image frames (leave blank to auto-detect): " IMAGE_COUNT
 if [ -z "${IMAGE_COUNT}" ]; then
   IMAGE_COUNT=$(ls "${IMAGE_PATH}"/frame*.png 2>/dev/null | wc -l)
   if [ "$IMAGE_COUNT" -eq 0 ]; then
-    echo "[Splash] No images found in ${IMAGE_PATH} matching frame*.png."
+    echo "[Splash] No images found in ${IMAGE_PATH} matching frame*.png. Exiting."
     exit 1
   fi
 fi
 
-# Ask for rotation angle (default 90).
+# Prompt for rotation angle (default is 90).
 read -p "[Splash] Enter the rotation angle in degrees (default is 90): " ROTATION
 if [ -z "$ROTATION" ]; then
   ROTATION=90
 fi
 
-# Optional scaling percentage.
+# Prompt for optional scaling percentage.
 read -p "[Splash] Enter scaling percentage (leave blank for none): " SCALE
 
 echo "[Splash] Using images from: ${IMAGE_PATH}"
 echo "[Splash] Image count: ${IMAGE_COUNT}"
 echo "[Splash] Rotation: ${ROTATION} degrees"
 if [ -n "${SCALE}" ]; then
-  echo "[Splash] Scaling percentage: ${SCALE}%"
+  echo "[Splash] Scaling: ${SCALE}%"
 fi
 
-# Change to the PiSplazh directory and run its install script.
-echo "[Splash] Installing Plymouth splash via PiSplazh..."
+# Execute the PiSplazh install script.
+echo "[Splash] Installing Plymouth splash using PiSplazh..."
 pushd "${PISPLAZH_DIR}" > /dev/null
-bash ./install_plymouth.sh -p "${IMAGE_PATH}" -c "${IMAGE_COUNT}" -r "${ROTATION}" $( [ -n "${SCALE}" ] && echo "-s ${SCALE}" )
+if [ -n "$SCALE" ]; then
+  bash ./install_plymouth.sh -p "${IMAGE_PATH}" -c "${IMAGE_COUNT}" -r "${ROTATION}" -s "${SCALE}"
+else
+  bash ./install_plymouth.sh -p "${IMAGE_PATH}" -c "${IMAGE_COUNT}" -r "${ROTATION}"
+fi
 popd > /dev/null
 
 echo "[Splash] Plymouth Animated Splash setup complete."
@@ -272,12 +278,16 @@ if [ ! -d "${RADI0_DIR}" ]; then
   echo "[Radi0] Cloning Radi0 repository into ${RADI0_DIR}..."
   sudo -u "${TARGET_USER}" git clone https://github.com/jdx4444/radi0.git "${RADI0_DIR}"
 else
-  echo "[Radi0] Radi0 repository already exists in ${RADI0_DIR}. Skipping clone."
+  echo "[Radi0] Radi0 repository exists in ${RADI0_DIR}. Updating with latest changes..."
+  pushd "${RADI0_DIR}" > /dev/null
+  sudo -u "${TARGET_USER}" git pull
+  popd > /dev/null
 fi
 
 # Build the Radi0 application.
 echo "[Radi0] Building Radi0 application..."
 pushd "${RADI0_DIR}" > /dev/null
+sudo -u "${TARGET_USER}" make clean 2>/dev/null || true
 sudo -u "${TARGET_USER}" make
 popd > /dev/null
 
@@ -298,22 +308,24 @@ echo "Section 4: Radi0 Autostart Setup"
 echo "========================================="
 sleep 1
 
-# Clone the Radi0Boot repository if not already present.
+# Clone (or update) the Radi0Boot repository.
 RADI0BOOT_DIR="${USER_HOME}/radi0Boot"
 if [ ! -d "${RADI0BOOT_DIR}" ]; then
   echo "[Autostart] Cloning Radi0Boot repository into ${RADI0BOOT_DIR}..."
   sudo -u "${TARGET_USER}" git clone https://github.com/jdx4444/radi0Boot.git "${RADI0BOOT_DIR}"
 else
-  echo "[Autostart] Radi0Boot repository already exists in ${RADI0BOOT_DIR}. Skipping clone."
+  echo "[Autostart] Radi0Boot repository exists in ${RADI0BOOT_DIR}. Updating..."
+  pushd "${RADI0BOOT_DIR}" > /dev/null
+  sudo -u "${TARGET_USER}" git pull
+  popd > /dev/null
 fi
 
-# Prompt for an optional delay before launching Radi0 (default 2 seconds).
+# Prompt for optional launch delay.
 read -p "[Autostart] Enter delay in seconds before launching Radi0 (default is 2): " DELAY_SECONDS
 if [ -z "$DELAY_SECONDS" ]; then
   DELAY_SECONDS=2
 fi
 
-# Configure autostart: create a .desktop file in the target user's autostart directory.
 AUTOSTART_DIR="${USER_HOME}/.config/autostart"
 DESKTOP_FILE="${AUTOSTART_DIR}/radi0x_app.desktop"
 
@@ -333,7 +345,6 @@ Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF
 
-# Remove any conflicting autostart files (if present).
 rm -f "${AUTOSTART_DIR}/hide_cursor.desktop" "${AUTOSTART_DIR}/kiosk.desktop" 2>/dev/null
 
 echo "[Autostart] Radi0 autostart setup complete."
@@ -347,7 +358,7 @@ echo "========================================="
 echo "All sections completed successfully!"
 echo "Notes:"
 echo "  - X729 UPS services are active (check with 'systemctl status ...')."
-echo "  - For the x729off alias to work, have '${TARGET_USER}' log out and back in (or run 'source ${TARGET_BASHRC}')."
+echo "  - For the x729off alias to take effect, have '${TARGET_USER}' log out and back in (or run 'source ${TARGET_BASHRC}')."
 echo "  - Plymouth splash activation and autostart changes may require a reboot."
 echo "========================================="
 echo "Master setup complete. Please reboot your system for all changes to take effect."
