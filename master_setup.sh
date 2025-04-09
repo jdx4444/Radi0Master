@@ -206,7 +206,13 @@ echo "========================================="
 sleep 1
 
 # Prompt for the splash screen images directory.
-read -p "[Splash] Enter the absolute path to your splash screen images directory (images must be named frame1.png, frame2.png, ...): " IMAGE_PATH
+# If the user leaves this blank, default to the assets directory within the PiSplazh repository.
+read -p "[Splash] Enter the absolute path to your splash screen images directory (default: assets in the PiSplazh repo): " IMAGE_PATH
+if [ -z "$IMAGE_PATH" ]; then
+  IMAGE_PATH="${USER_HOME}/PiSplazh/assets"
+  echo "[Splash] No path provided. Defaulting to ${IMAGE_PATH}"
+fi
+
 if [ ! -d "${IMAGE_PATH}" ]; then
   echo "[Splash] Error: Directory '${IMAGE_PATH}' does not exist."
   exit 1
