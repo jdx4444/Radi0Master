@@ -17,23 +17,6 @@ cat << 'EOF'
 | `       `---^   `---'    `  `---' |
 |___________________________________|
 
-
-           __________
-__________/ ___  _  /\ ______________________
-         //    ||  \\  \_______             /|
-        ||_____||___\\/       /o           / |
-        | -/  \--------/  \--/o/          /  /     
-        `--\__/--------\__/---           /  / 
- ________       ________        ________/  /  
---------       --------        --------/  / 
-                                    _ /| /       
-                                 _/  | /                       
-______________________________/| |__/         
-        3ND 0F TH3 R0AD      | |/   
-_____________________________|/   
-
-jdx4444
-
 EOF
 
 # This master script automates the execution of all the other radi0 setup scripts,
@@ -42,7 +25,6 @@ EOF
 #   2. Plymouth animated splash (from PiSplazh) https://github.com/jdx4444/PiSplazh
 #   3. Radi0 main application build (from radi0) https://github.com/jdx4444/radi0
 #   4. Radi0 autostart configuration. (from radi0Boot) https://github.com/jdx4444/radi0Boot
-#
 #
 # IMPORTANT:
 #   - Run this script as root (e.g., via sudo)
@@ -219,10 +201,18 @@ echo "========================================="
 sleep 1
 
 # Prompt for the splash screen images directory.
-# If the user leaves this blank or types "assets", default to the assets directory in the PiSplazh repository.
+# If the user leaves this blank or types "assets", default to using the assets directory in the PiSplazh repository.
 read -p "[Splash] Enter the absolute path to your splash screen images directory (default: assets in the PiSplazh repo): " IMAGE_PATH
 if [ -z "$IMAGE_PATH" ] || [ "$IMAGE_PATH" = "assets" ]; then
-  IMAGE_PATH="${USER_HOME}/PiSplazh/assets"
+  # Define the default location for the PiSplazh repository.
+  DEFAULT_SPLASH_REPO="${USER_HOME}/PiSplazh"
+  DEFAULT_SPLASH_DIR="${DEFAULT_SPLASH_REPO}/assets"
+  # If the PiSplazh repository hasn't been cloned yet, clone it automatically.
+  if [ ! -d "${DEFAULT_SPLASH_REPO}" ]; then
+      echo "[Splash] PiSplazh repository not found. Cloning it into ${DEFAULT_SPLASH_REPO}..."
+      git clone https://github.com/jdx4444/PiSplazh "${DEFAULT_SPLASH_REPO}"
+  fi
+  IMAGE_PATH="${DEFAULT_SPLASH_DIR}"
   echo "[Splash] Defaulting to ${IMAGE_PATH}"
 fi
 
@@ -443,3 +433,22 @@ echo "  - For the alias to take effect, please have user '${TARGET_USER}' log ou
 echo "  - A reboot may be required for the Plymouth splash theme to take effect and for autostart changes to load."
 echo "========================================="
 echo "Master setup complete. Reboot your system to ensure all changes take effect."
+
+cat << 'EOF'
+           __________
+__________/ ___  _  /\ ______________________
+         //    ||  \\  \_______             /|
+        ||_____||___\\/       /o           / |
+        | -/  \--------/  \--/o/          /  /     
+        `--\__/--------\__/---           /  / 
+ ________       ________        ________/  /  
+--------       --------        --------/  / 
+                                    _ /| /       
+                                 _/  | /                       
+______________________________/| |__/         
+        3ND 0F TH3 R0AD      | |/   
+_____________________________|/   
+
+jdx4444
+
+EOF
