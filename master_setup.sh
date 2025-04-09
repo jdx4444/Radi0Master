@@ -5,19 +5,32 @@
 # ASCII Art Banner for radi0
 cat << 'EOF'
 
-                                           __________
-__________________________________________/ ___  _  /\ ______________________
-                    |    o  ,===.        //    ||  \\  \_______             /|
-,===.___,===.___,===|    .  || ||       ||_____||___\\/       /o           / |
-|       ,---|   |   |    |  |'='|       | -/  \--------/  \--/o/          /  /     
-`       `---^   `---'    `  `---'        --\__/--------\__/---           /  / 
-________        ________        ________        ________        ________/  /  
--------        --------        --------        --------        --------/  / 
-                                                                    _ /| /       
-                                                                  _/  | /                       
-_________________________________________________________________/| |__/         
-                       END OF THE ROAD                          | |/   
-________________________________________________________________|/   
+
+       o
+        \    o
+         \  /
+          \/
+ ===================================
+|                     |    o  ,===. |    
+| ,===.___,===.___,===|    .  || || |
+| |       ,---|   |   |    |  |'='| | 
+| `       `---^   `---'    `  `---' |
+|___________________________________|
+
+
+           __________
+__________/ ___  _  /\ ______________________
+         //    ||  \\  \_______             /|
+        ||_____||___\\/       /o           / |
+        | -/  \--------/  \--/o/          /  /     
+        `--\__/--------\__/---           /  / 
+ ________       ________        ________/  /  
+--------       --------        --------/  / 
+                                    _ /| /       
+                                 _/  | /                       
+______________________________/| |__/         
+        3ND 0F TH3 R0AD      | |/   
+_____________________________|/   
 
 jdx4444
 
@@ -206,11 +219,11 @@ echo "========================================="
 sleep 1
 
 # Prompt for the splash screen images directory.
-# If the user leaves this blank, default to the assets directory within the PiSplazh repository.
+# If the user leaves this blank or types "assets", default to the assets directory in the PiSplazh repository.
 read -p "[Splash] Enter the absolute path to your splash screen images directory (default: assets in the PiSplazh repo): " IMAGE_PATH
-if [ -z "$IMAGE_PATH" ]; then
+if [ -z "$IMAGE_PATH" ] || [ "$IMAGE_PATH" = "assets" ]; then
   IMAGE_PATH="${USER_HOME}/PiSplazh/assets"
-  echo "[Splash] No path provided. Defaulting to ${IMAGE_PATH}"
+  echo "[Splash] Defaulting to ${IMAGE_PATH}"
 fi
 
 if [ ! -d "${IMAGE_PATH}" ]; then
