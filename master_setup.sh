@@ -483,7 +483,7 @@ echo "  - at the end of /boot/firmware/cmdline.txt -- add: loglevel=3 vt.global_
 echo "  - reboot required for the Plymouth splash theme to take effect and for autostart changes to load."
 echo "========================================="
 echo "Master setup complete. Reboot your system to ensure all changes take effect."
-sleep 4
+sleep 16
 
 cat << 'EOF'
            __________
